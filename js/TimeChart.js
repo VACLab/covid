@@ -5,6 +5,8 @@ class TimeChart {
         this.forecast_period = 3;
         this.margin = 30;
         this.is_rerender = false;
+        this.selected_region_list = [];
+        this.color_mapped_regions = [];
 
         // Listen to resize events.
         let container = document.getElementById("time_chart_container");
@@ -33,6 +35,8 @@ class TimeChart {
         this.ylinear = d3.scaleLinear().domain([0,3*this.data.max_count]);
         this.ylog = d3.scaleSymlog().domain([0,3*this.data.max_count]);
         this.y = this.ylinear;
+        //this.colors = d3.scaleOrdinal().domain(d3.range(12)).range(d3.schemePaired);
+        this.colors = d3.scaleOrdinal().range(d3.schemeCategory10);
 
         // Initialize to use the latest model
         this.useoldmodel = false;
@@ -85,11 +89,22 @@ class TimeChart {
     }
 
     select(region_name) {
-        this.selected_region = region_name;
+        let region_index = this.selected_region_list.indexOf(region_name);
+
+        if (region_index < 0) {
+            // Add the region
+            this.selected_region_list.push(region_name)
+        }
+        else {
+            // Remove the region
+            this.selected_region_list.splice(region_index,1)
+        }
         this.render();
     }
 
     render() {
+        let colorscale = this.colors;
+
         // Update scales
         this.x.range([3*this.margin, this.width-2*this.margin]);
         this.xdates.range([3*this.margin, this.width-2*this.margin]);
@@ -277,7 +292,6 @@ class TimeChart {
 
         // Calculate exponential regression
         let pairs = d3.zip(d3.range(this.data.totals.length-(this.useoldmodel ? this.old_model_offset : 0)), this.data.totals);
-        console.log(pairs.length);
         // Avoid log(0) errors by alterning all zero values to "just over zero"
         pairs = pairs.map(d => (d[1] == 0 ? [d[0], 0.000001] : d));
         let exponential_model = exponential(pairs, {precision: 5});
@@ -292,7 +306,7 @@ class TimeChart {
                 .attr("d", curve_generator)
                 .attr("stroke-width", "2")
                 .style("fill", "none")
-                .style("stroke", "#8888ff")
+                .style("stroke", "#999999")
                 .style("stroke-dasharray", "4 2");
         }
         else {
@@ -308,7 +322,7 @@ class TimeChart {
                 .attr("d", line_generator)
                 .attr("stroke-width", "4")
                 .style("fill", "none")
-                .style("stroke", "#888888");
+                .style("stroke", "#777777");
         }
         else {
             d3.select(".total_line")
@@ -325,95 +339,142 @@ class TimeChart {
             .attr("r", 5)
             .on('mouseover', this.tool_tip.show)
             .on('mouseout', this.tool_tip.hide)
-            .style("fill", "#888888");
+            .style("fill", "#777777");
         total_dots
             .transition().duration(500)
                 .attr("cx", function(d,i) {return x(itodate[i]);})
                 .attr("cy", function(d,i) {return y(d);});
 
-        // Now render the region dots.
-        let region_data = []
-        if (this.selected_region != undefined) {
-            region_data = this.data.regions[this.selected_region];
-
+        // For each region, create an object that includes the corresponding data and model.
+        let selected_region_data = this.selected_region_list.map(region => {
+            let region_data = this.data.regions[region];
             // First, the region model.
             // Calculate exponential regression
             pairs = d3.zip(d3.range(region_data.length-(this.useoldmodel ? this.old_model_offset : 0)), region_data);
-            console.log(pairs.length);
             // Avoid log(0) errors by alterning all zero values to "just over zero"
             pairs = pairs.map(d => (d[1] == 0 ? [d[0], 0.000001] : d));
             let exponential_model = exponential(pairs, {precision: 5});
             // Generate samples from the exponential model.
             let model_totals = d3.range(region_data.length+this.forecast_period).map(d => exponential_model.predict(d)[1]);
-            if (this.svg.select(".region_model_line").empty()) {
-                this.svg.append("path")
-                    .datum(model_totals)
-                    .attr("class", "region_model_line")
-                    .attr("clip-path", "url(#chart-clip)")
-                    .attr("d", curve_generator)
-                    .attr("stroke-width", "2")
-                    .style("fill", "none")
-                    .style("stroke", "#ff88ff")
-                    .style("stroke-dasharray", "4 2")
-                    .style("opacity", 0)
-                            .transition().duration(500)
-                            .style("opacity", 1)
+
+            return {
+                region: region,
+                real_data: region_data,
+                model_data: model_totals
+            }
+        })
+
+        // Now render the region model lines.
+        let region_model_lines = this.svg.selectAll(".region_model_line").data(selected_region_data, function(d,i) { return d.region; });
+
+        let mapped_regions = this.color_mapped_regions;
+        let get_data_index = function(region) {
+            let index = mapped_regions.indexOf(region);
+            if (index < 0) {
+                mapped_regions.push(region);
+                return mapped_regions.length - 1;
             }
             else {
-                d3.select(".region_model_line")
-                    .transition().duration(500)
-                    .attr("d", curve_generator(model_totals));
-            }
-
-            // Render the region data line since there is region data.
-            if (this.svg.select(".region_line").empty()) {
-                this.svg.append("path")
-                    .datum(region_data)
-                    .attr("class", "region_line")
-                    .attr("d", line_generator)
-                    .attr("stroke-width", "3")
-                    .style("fill", "none")
-                    .style("stroke", "#ff8844")
-                    .style("opacity", 0)
-                            .transition().duration(500)
-                            .style("opacity", 1)
-            }
-            else {
-                d3.select(".region_line").transition().duration(500).attr("d", line_generator(region_data));
+                return index;
             }
         }
-        else {
-            d3.select(".region_line")
-                .transition().duration(500)
-                .style("opacity", 0)
-                .remove();
-            d3.select(".region_model_line")
-                .transition().duration(500)
-                .style("opacity", 0)
-                .remove();
-        }
 
-        // Region data dots
-        let region_dots = this.svg.selectAll(".region_dot").data(region_data);
-        region_dots.enter().append("circle")
-            .attr("class", "region_dot")
-            .attr("cx", function(d,i) {return x(itodate[i]);})
-            .attr("cy", function(d,i) {return y(d);})
-            .attr("r", 0)
-            .on('mouseover', this.tool_tip.show)
-            .on('mouseout', this.tool_tip.hide)
+        region_model_lines
             .transition().duration(500)
-            .attr("r", 3)
-            .style("fill", "#ff8844");
-        region_dots
+            .attr("d", function(d) { return curve_generator(d.model_data); });
+
+        region_model_lines.enter().append("path")
+                .attr("class", "region_model_line")
+                .attr("clip-path", "url(#chart-clip)")
+                .attr("d", function(d) { return curve_generator(d.model_data);})
+                .attr("stroke-width", "2")
+                .style("fill", "none")
+                .style("stroke", function(d,i) {return colorscale(get_data_index(d.region));})
+            .style("stroke-dasharray", "4 2")
+                .style("opacity", 0)
+                .transition().duration(500)
+                .style("opacity", 0.5);
+
+        region_model_lines.exit()
             .transition().duration(500)
-            .attr("cx", function(d,i) {return x(itodate[i]);})
-            .attr("cy", function(d,i) {return y(d);})
-            .attr("r", 3)
-            .style("fill", "#ff8844");
-        region_dots.exit()
-            .transition().duration(500)
-            .attr('r',0)
+            .style("opacity", 0)
             .remove();
+
+        // Now render the region lines.
+        let region_lines = this.svg.selectAll(".region_line").data(selected_region_data, function(d,i) { return d.region; });
+
+        region_lines
+            .transition().duration(500)
+            .attr("d", function(d) { return line_generator(d.real_data); });
+
+        region_lines.enter()
+            .append("path")
+                .attr("class", "region_line")
+                .attr("d", function(d) { return line_generator(d.real_data); })
+                .attr("stroke-width", "3")
+                .style("fill", "none")
+                //.style("stroke", "#ff8844")
+                .style("stroke", function(d,i) {return colorscale(get_data_index(d.region))})
+                .style("opacity", 0)
+                        .transition().duration(500)
+                        .style("opacity", 1)
+
+        region_lines.exit()
+            .transition().duration(500)
+            .style("opacity", 0)
+            .remove();
+
+        // Finally, the region data dots
+        // Add a group for each region.
+        let region_dot_groups = this.svg.selectAll(".region_dot_group").data(selected_region_data, function(d,i) { return d.region;});
+
+        region_dot_groups.selectAll(".region_dot").data(function(d) { return d.real_data; })
+            .transition().duration(500)
+            .attr("cx", function(d,i) {return x(itodate[i]);})
+            .attr("cy", function(d,i) {return y(d);})
+            .attr("r", 3);
+
+        region_dot_groups.enter().append("g")
+            .attr("class", "region_dot_group")
+                .selectAll(".region_dot").data(function(d) { return d.real_data; })
+                .enter().append("circle")
+                    .attr("class", "region_dot")
+                    .attr("cx", function(d,i) {return x(itodate[i]);})
+                    .attr("cy", function(d,i) {return y(d);})
+                    .style("fill", function(d,i) { return colorscale((get_data_index(d3.select(this.parentNode).datum().region))) })
+                    //.style("fill", "#ff8844")
+                    .attr("r", 0)
+                    .on('mouseover', this.tool_tip.show)
+                    .on('mouseout', this.tool_tip.hide)
+                    .transition().duration(500)
+                    .attr("r", 3);
+
+        region_dot_groups.exit()
+            .transition().duration(500)
+            .style("opacity", 0)
+            .remove();
+
+        // Render the legend.
+        let legend_labels = this.svg.selectAll(".legend_text").data(["Nationwide"].concat(this.selected_region_list), function(d,i) {return d;});
+        let margin = this.margin;
+
+        legend_labels
+            .transition().duration(500)
+            .attr('y', function(d,i) {return margin + 10 + i*18})
+
+        legend_labels.enter().append("text")
+            .attr("class", "legend_text")
+            .attr('x', 3*this.margin + 10)
+            .attr('y', function(d,i) {return margin + 10 + i*18})
+            .style("font-size", "12")
+            .style("fill", function(d) { return (d==='Nationwide'? '#888888' : colorscale(get_data_index(d))) })
+            .text(function(d) { return d;});
+
+        legend_labels.exit()
+            .transition().duration(500)
+            .style("opacity", 0)
+            .remove();
+
+
     }
 }
