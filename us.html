@@ -116,7 +116,7 @@
             </div>
 
             <div class="row flex-grow-1" id="time_chart_container"> </div>
-            <div>* Please that the 'forecast' shown on this page is just a simple extrapolation from the best-fit exponential
+            <div>* The 'forecast' shown on this page is just a simple extrapolation from the best-fit exponential
                 model derived from the historical data shown in the visualization. This is obviously a VAST
                 simplification of the underlying process. Any serious analysis would need to adopt much more rigorous
                 epidemiological models.
@@ -130,10 +130,6 @@
 </div>
 <script>
     function legend_select(state_name) {
-/*        let legends = d3.selectAll('.legend');
-        legends.classed('off', true);
-        legends.classed('on', false);
-*/
         if (state_name != undefined) {
             let active = d3.select("#legend-" + state_name.replace(/ /g, '-'));
 

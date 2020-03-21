@@ -6,7 +6,8 @@ class CovidData {
         this.date_strings = []
 
         // Set the first date of data.
-        let next_date  = new Date(2020,2,1);
+        // let next_date  = new Date(2020,2,1);
+        let next_date  = new Date(2020,2,10);
         let current_date  = new Date();
         current_date.setHours(0,0,0,0);
         current_date.setDate(current_date.getDate())

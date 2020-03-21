@@ -30,7 +30,10 @@ class TimeChart {
         size_observer.observe(container);
 
         // Scales
-        this.xdates = d3.scaleTime().domain([this.data.dates[0], new Date().setDate(this.data.dates[this.data.dates.length-1].getDate()+this.forecast_period)]);
+        this.end_date = new Date();
+        this.end_date.setDate(this.data.dates[this.data.dates.length-1].getDate()+this.forecast_period);
+        this.end_date.setHours(0,0,0,0);
+        this.xdates = d3.scaleTime().domain([this.data.dates[0], this.end_date]);
         this.x = d3.scaleLinear().domain([0,this.data.totals.length+this.forecast_period]);
         this.ylinear = d3.scaleLinear().domain([0,3*this.data.max_count]);
         this.ylog = d3.scaleSymlog().domain([0,3*this.data.max_count]);
@@ -128,7 +131,7 @@ class TimeChart {
                 .attr("x", this.xdates(this.data.dates[this.data.dates.length-1]))
                 .attr("y", this.ylinear(3*this.data.max_count))
                 .attr("height", this.ylinear(0) - this.ylinear(3*this.data.max_count))
-                .attr("width", this.xdates(new Date().setDate(this.data.dates[this.data.dates.length-1].getDate()+this.forecast_period)) - this.xdates(this.data.dates[this.data.dates.length-1]))
+                .attr("width", this.xdates(this.end_date) - this.xdates(this.data.dates[this.data.dates.length-1]))
                 .attr("stroke-width", "0")
                 .style("fill", "#eeeeee")
                 .style("stroke", "none");
@@ -165,7 +168,7 @@ class TimeChart {
                 .style("font-size", "10")
                 .text("Forecast*");
 
-            this.svg.append("text")
+/*            this.svg.append("text")
                 .attr("id", "forecast_label_2")
                 .attr("x", this.xdates(this.data.dates[this.data.dates.length-1]) + 5)
                 .attr("y", this.y(3*this.data.max_count) + 18)
@@ -174,7 +177,7 @@ class TimeChart {
                 .style("fill", "#444444")
                 .style("font-size", "7")
                 .text("(Naive Exponential Model)");
-
+*/
             // Add axes.  First the X axis and label.
             this.xaxis = d3.axisBottom(this.xdates);
             this.svg.append("g")
@@ -242,7 +245,7 @@ class TimeChart {
 
             this.svg.selectAll("#forecast_zone")
                 .transition().duration(500)
-                .attr("width", this.xdates(new Date().setDate(this.data.dates[this.data.dates.length-1].getDate()+this.forecast_period)) - this.xdates(this.data.dates[this.data.dates.length-1-(this.useoldmodel ? this.forecast_period : 0)]))
+                .attr("width", this.xdates(this.end_date) - this.xdates(this.data.dates[this.data.dates.length-1-(this.useoldmodel ? this.forecast_period : 0)]))
                 .attr("x", this.xdates(this.data.dates[this.data.dates.length-1-(this.useoldmodel ? this.forecast_period : 0)]));
 
             this.svg.selectAll("#data_label")
@@ -253,10 +256,11 @@ class TimeChart {
                 .transition().duration(500)
                 .attr("x", this.xdates(this.data.dates[this.data.dates.length-1-(this.useoldmodel ? this.forecast_period : 0)]) + 5);
 
+/*
             this.svg.selectAll("#forecast_label_2")
                 .transition().duration(500)
                 .attr("x", this.xdates(this.data.dates[this.data.dates.length-1-(this.useoldmodel ? this.forecast_period : 0)]) + 5);
-
+*/
             // Now update the x axis label.
             let xlabel = this.svg.select("#xaxislabel");
             let newwidth = 3*this.margin + ((this.width-4*this.margin) / 2);
@@ -275,7 +279,9 @@ class TimeChart {
         // Now add dates for the forecast period.
         let last_date = this.data.dates[this.data.dates.length-1];
         for (let i=1; i<=this.forecast_period; i++) {
-            itodate.push(new Date().setDate(last_date.getDate()+i))
+            let new_date = new Date();
+            new_date.setDate(last_date.getDate()+i)
+            itodate.push(new_date)
         }
 
         // Generator for the data line

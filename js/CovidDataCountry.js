@@ -1,13 +1,15 @@
 class CovidDataCountry {
-    constructor(raw_data) {
+    constructor(raw_data, strip_substring) {
         // Initialize an object to store the various data series.
         this.max_count = 0;
         this.dates = []
         this.date_strings = []
 
-        // FIRST DATE OF DATA, MOSTLY ZEROES: let next_date  = new Date(2020,0,22);
-        let next_date  = new Date(2020,1,15);
+        // Set the first date of data.
+        // let next_date  = new Date(2020,2,1);
+        let next_date  = new Date(2020,0,1);
         let current_date  = new Date();
+        current_date.setHours(0,0,0,0);
         current_date.setDate(current_date.getDate())
         while (next_date < current_date) {
             // Is the date in the data file?
