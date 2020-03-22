@@ -479,7 +479,7 @@ class TimeChart {
             .remove();
 
         // Render the legend.
-        let legend_labels = this.svg.selectAll(".legend_text").data([this.grand_total_label].concat(this.selected_region_list), function(d,i) {return d;});
+        let legend_labels = this.svg.selectAll(".legend_text").data((this.show_totals ? [this.grand_total_label] : []).concat(this.selected_region_list), function(d,i) {return d;});
         let margin = this.margin;
 
         legend_labels
