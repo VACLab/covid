@@ -39,25 +39,25 @@
             left: 0;
         }
     </style>
-    <title>COVID-19 Around the World</title>
+    <title>COVID-19 in the United States</title>
     <link rel="stylesheet" href="css/bootstrap.min.css" crossorigin="anonymous"/>
     <script src="js/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
     <script src="js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script src="js/d3.min.js" crossorigin="anonymous"></script>
     <script src="js/d3-tip.js" crossorigin="anonymous"></script>
-    <script src="js/CovidDataCountry.js" crossorigin="anonymous"></script>
+    <script src="js/CovidData.js" crossorigin="anonymous"></script>
     <script src="js/TimeChart.js" crossorigin="anonymous"></script>
     <script src="js/ResizeObserver.js" crossorigin="anonymous"></script>
     <script src="js/regression.js" crossorigin="anonymous"></script>
     <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-32250702-3"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-32250702-3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
-        gtag('config', 'UA-32250702-3');
-    </script>
+  gtag('config', 'UA-32250702-3');
+</script>
 
 </head>
 <body style="">
@@ -65,17 +65,17 @@
     <div class="container-fluid" style="padding:0;">
         <div class="navbar-header">
             <a class="navbar-brand" href="#">
-                COVID-19 by Country
+                COVID-19 by State in the United States
             </a>
         </div>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
-            <li class="nav-item active">
-                <a class="nav-link" href="#">Confirmed Cases <span class="sr-only">(current)</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="world-deaths.html">Deaths</a>
-            </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="us.html">Confirmed Cases</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Deaths <span class="sr-only">(current)</span></a>
+                </li>
             </ul>
         </div>
     </div>
@@ -86,14 +86,13 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-3" style="background: #fff;">
-            <b>Confirmed Cases By Country</b><br/><span style="font-size:small;">Data <a href="https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv">pulled live</a> as of <span id="last_date"></span>.<br/>Click on a country name below to see country-level data.</span><p></p>
-            <div class="container-fluid" id="country_container">
+            <b>Deaths By State</b><br/><span style="font-size:small;">Data <a href="https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv">pulled live</a> as of <span id="last_date"></span>.<br/>Click on a state name below to see state-level data.</span><p></p>
+            <div class="container-fluid" id="state_container">
                 <i>Loading...</i>
             </div>
         </div>
         <div class="col-md-9 flex-grow-1;" style="background: #fff;">
-
-            <b>Confirmed Cases Over Time</b>
+            <b>Deaths Over Time</b>
             <br/>
             <button type="button" id='linearbtn' class="btn btn-primary btn-sm" onclick="{
                 $('#linearbtn').addClass('btn-primary');
@@ -117,7 +116,7 @@
                 $('#todaymodelbtn').removeClass('btn-secondary');
                 covid_time_chart.use_old_model(false);
             }">Latest Model</button>
-                <button type="button" id='oldmodelbtn' class="btn btn-secondary btn-sm" onclick="{
+            <button type="button" id='oldmodelbtn' class="btn btn-secondary btn-sm" onclick="{
                 $('#oldmodelbtn').addClass('btn-primary');
                 $('#oldmodelbtn').removeClass('btn-secondary');
                 $('#todaymodelbtn').addClass('btn-secondary');
@@ -132,9 +131,8 @@
                 simplification of the underlying process. Any serious analysis would need to adopt much more rigorous
                 epidemiological models.
             </div>
-        </div>
     </div>
-</div>
+    </div>
 <div class="row">
     <div style="margin-top: 15px; border-top: 1px solid lightgray; text-align: center; font-size: small; width: 100%;" class="col-md-12 flex-grow-1">
         <br/><a href="http://vaclab.unc.edu/"><img style="width: 200px;" src="vaclab_logo.svg"></a>
@@ -144,9 +142,9 @@
     </div>
 </div>
 <script>
-    function legend_select(country_name) {
-        if (country_name != undefined) {
-            let active = d3.select("#legend-" + country_name.replace(/ /g, '-'));
+    function legend_select(state_name) {
+        if (state_name != undefined) {
+            let active = d3.select("#legend-" + state_name.replace(/ /g, '-'));
 
             if (active.classed('on')) {
                 active.classed('off', true);
@@ -170,55 +168,29 @@
             }
         }
     }
-    d3.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv").then(function(data) {
+
+    d3.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv").then(function(data) {
         let numformat = d3.format(",");
 
-        country_data = data.filter(record => (record['Province/State'].indexOf(',') == -1));
-        let country_groups = d3.nest()
-            .key(d => d['Country/Region'])
-            .rollup(subregions => {
-                agg_data_for_country = subregions[0];
-                // Empty out the province/state data, as well as lat/long data.
-                agg_data_for_country['Province/State'] = '';
-                agg_data_for_country['Lat'] = '';
-                agg_data_for_country['Long'] = '';
-
-                // Get all dates.  We assume that this means all object properties that start with a number.
-                let dates = Object.keys(agg_data_for_country).filter(prop => ((prop.charAt(0) >= '0') && (prop.charAt(0) <= '9')) );
-                // First, convert current agg_data object to numbers.
-                for (let i=0; i<dates.length; i++) {
-                    agg_data_for_country[dates[i]] = +agg_data_for_country[dates[i]]
-                }
-
-                // Now aggregate any remaining subregions.
-                for (let r=1; r<subregions.length; r++) {
-                    for (let i=0; i<dates.length; i++) {
-                        agg_data_for_country[dates[i]] += (+subregions[r][dates[i]])
-                    }
-                }
-
-                return agg_data_for_country;
-            })
-            .entries(country_data);
-
-        let covid_data = new CovidDataCountry(country_groups.map(record => record.value));
-        covid_time_chart = new TimeChart(covid_data, "Global");
+        us_state_data = data.filter(record => (record['Country/Region'] === 'US') && (!record['Province/State'].includes(', ')));
+        let covid_data = new CovidData(us_state_data, "");
+        covid_time_chart = new TimeChart(covid_data, "Nationwide");
 
         // Populate last date
         let last_date_span = d3.select("#last_date");
         last_date_span.html(covid_data.date_strings[covid_data.date_strings.length-1]);
 
-        // Populate country data table.
-        let country_data_div = d3.select("#country_container");
+        // Populate state data table.
+        let state_data_div = d3.select("#state_container");
         let _html = "<table>";
-        _html += "<tr onclick=\'legend_select(); covid_time_chart.toggle_total();\'><th style='padding-right: 15px;'>Global</th><th>"+numformat(covid_data.totals[covid_data.totals.length-1])+"</th><th><svg class='legend on' id='legend-total' style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='5'></circle></svg></th></tr>";
+        _html += "<tr onclick=\'legend_select(); covid_time_chart.toggle_total();\'><th style='padding-right: 15px;'>Nationwide</th><th>"+numformat(covid_data.totals[covid_data.totals.length-1])+"</th><th><svg class='legend on' id='legend-total' style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='5'></circle></svg></th></tr>";
 
-        let country_names = Object.keys(covid_data.regions).sort();
-        for (i=0; i<country_names.length; i++) {
-            _html += "<tr onclick='legend_select(\""+country_names[i]+"\"); covid_time_chart.select(\""+country_names[i]+"\");'><td style='font-size: small; padding-right: 15px;'>"+country_names[i]+"</td><td style='font-size: small;'>"+numformat(covid_data.regions[country_names[i]][covid_data.date_strings.length-1])+"</td><td><svg class='legend off' id='legend-"+country_names[i].replace(/ /g, '-')+"' style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='3'></circle></svg></td></tr>";
+        let state_names = Object.keys(covid_data.regions).sort();
+        for (i=0; i<state_names.length; i++) {
+            _html += "<tr onclick='legend_select(\""+state_names[i]+"\"); covid_time_chart.select(\""+state_names[i]+"\");'><td style='font-size: small; padding-right: 15px;'>"+state_names[i]+"</td><td style='font-size: small;'>"+numformat(covid_data.regions[state_names[i]][covid_data.date_strings.length-1])+"</td><td><svg class='legend off' id='legend-"+state_names[i].replace(/ /g, '-')+"' style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='3'></circle></svg></td></tr>";
         }
         _html += "</table>";
-        country_data_div.html(_html);
+        state_data_div.html(_html);
 
     });
 </script>

@@ -70,12 +70,12 @@
         </div>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
-            <li class="nav-item active">
-                <a class="nav-link" href="#">Confirmed Cases <span class="sr-only">(current)</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="world-deaths.html">Deaths</a>
-            </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="world.html">Confirmed Cases</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Deaths <span class="sr-only">(current)</span></a>
+                </li>
             </ul>
         </div>
     </div>
@@ -86,14 +86,14 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-3" style="background: #fff;">
-            <b>Confirmed Cases By Country</b><br/><span style="font-size:small;">Data <a href="https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv">pulled live</a> as of <span id="last_date"></span>.<br/>Click on a country name below to see country-level data.</span><p></p>
+            <b>Deaths By Country</b><br/><span style="font-size:small;">Data <a href="https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv">pulled live</a> as of <span id="last_date"></span>.<br/>Click on a country name below to see country-level data.</span><p></p>
             <div class="container-fluid" id="country_container">
                 <i>Loading...</i>
             </div>
         </div>
         <div class="col-md-9 flex-grow-1;" style="background: #fff;">
 
-            <b>Confirmed Cases Over Time</b>
+            <b>Deaths Cases Over Time</b>
             <br/>
             <button type="button" id='linearbtn' class="btn btn-primary btn-sm" onclick="{
                 $('#linearbtn').addClass('btn-primary');
@@ -170,7 +170,7 @@
             }
         }
     }
-    d3.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv").then(function(data) {
+    d3.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv").then(function(data) {
         let numformat = d3.format(",");
 
         country_data = data.filter(record => (record['Province/State'].indexOf(',') == -1));
