@@ -1,12 +1,14 @@
 
 class TimeChart {
-    constructor(covid_data) {
+    constructor(covid_data, grand_total_label) {
         this.old_model_offset = 3;
         this.forecast_period = 3;
         this.margin = 30;
         this.is_rerender = false;
         this.selected_region_list = [];
+        this.show_totals = true;
         this.color_mapped_regions = [];
+        this.grand_total_label = grand_total_label;
 
         // Listen to resize events.
         let container = document.getElementById("time_chart_container");
@@ -38,7 +40,6 @@ class TimeChart {
         this.ylinear = d3.scaleLinear().domain([0,3*this.data.max_count]);
         this.ylog = d3.scaleSymlog().domain([0,3*this.data.max_count]);
         this.y = this.ylinear;
-        //this.colors = d3.scaleOrdinal().domain(d3.range(12)).range(d3.schemePaired);
         this.colors = d3.scaleOrdinal().range(d3.schemeCategory10);
 
         // Initialize to use the latest model
@@ -105,16 +106,69 @@ class TimeChart {
         this.render();
     }
 
+    toggle_total() {
+        this.show_totals = !this.show_totals;
+        this.render();
+    }
+
     render() {
         let colorscale = this.colors;
 
+        // For each selected region, create an object that includes the corresponding data and model.  We do this first
+        // so we can get a max count value, which we can in turn use to scale the visualization.
+        let selected_region_data = this.selected_region_list.map(region => {
+            let region_data = this.data.regions[region];
+            // First, the region model.
+            // Calculate exponential regression
+            let pairs = d3.zip(d3.range(region_data.length-(this.useoldmodel ? this.old_model_offset : 0)), region_data);
+            // Avoid log(0) errors by alterning all zero values to "just over zero"
+            pairs = pairs.map(d => (d[1] == 0 ? [d[0], 0.000001] : d));
+            let exponential_model = exponential(pairs, {precision: 5});
+            // Generate samples from the exponential model.
+            let model_totals = d3.range(region_data.length+this.forecast_period).map(d => exponential_model.predict(d)[1]);
+
+            return {
+                region: region,
+                real_data: region_data,
+                model_data: model_totals
+            }
+        });
+
+        // Calculate exponential regression for the totals, and sample it to use for drawing the total chart.  Similarly, we
+        // do this first so we can get a good max value for scaling the visualizations.
+        let pairs = d3.zip(d3.range(this.data.totals.length-(this.useoldmodel ? this.old_model_offset : 0)), this.data.totals);
+        // Avoid log(0) errors by alterning all zero values to "just over zero"
+        pairs = pairs.map(d => (d[1] == 0 ? [d[0], 0.000001] : d));
+        let exponential_model = exponential(pairs, {precision: 5});
+        let model_totals = d3.range(this.data.totals.length+this.forecast_period).map(d => exponential_model.predict(d)[1]);
+
+        //////////////////////////////////////////////////////////////////////
+        // Find the max value across all regions.
+        //////////////////////////////////////////////////////////////////////
+        let max_observed_value = 0;
+        for (let i=0; i<selected_region_data.length; i++) {
+            max_observed_value = Math.max(max_observed_value, d3.max(selected_region_data[i].model_data));
+            max_observed_value = Math.max(max_observed_value, d3.max(selected_region_data[i].real_data));
+        }
+        if (this.show_totals) {
+            max_observed_value = Math.max(max_observed_value, model_totals[model_totals.length-1])
+            max_observed_value = Math.max(max_observed_value, this.data.totals[this.data.totals.length-1])
+        }
+
+        //////////////////////////////////////////////////////////////////////
         // Update scales
+        //////////////////////////////////////////////////////////////////////
         this.x.range([3*this.margin, this.width-2*this.margin]);
         this.xdates.range([3*this.margin, this.width-2*this.margin]);
         this.ylog.range([this.height-2*this.margin, this.margin]);
         this.ylinear.range([this.height-2*this.margin, this.margin]);
+        // Apply the max observed value.
+        this.ylinear.domain([0,1.05*max_observed_value]);
+        this.ylog.domain([0,1.05*max_observed_value]);
 
-
+        //////////////////////////////////////////////////////////////////////
+        // Render
+        //////////////////////////////////////////////////////////////////////
         if (!this.is_rerender) {
             this.is_rerender = true;
 
@@ -129,8 +183,8 @@ class TimeChart {
             this.svg.append("rect")
                 .attr("id", "forecast_zone")
                 .attr("x", this.xdates(this.data.dates[this.data.dates.length-1]))
-                .attr("y", this.ylinear(3*this.data.max_count))
-                .attr("height", this.ylinear(0) - this.ylinear(3*this.data.max_count))
+                .attr("y", this.ylinear(this.ylinear.domain()[1]))
+                .attr("height", this.ylinear(0) - this.ylinear(this.ylinear.domain()[1]))
                 .attr("width", this.xdates(this.end_date) - this.xdates(this.data.dates[this.data.dates.length-1]))
                 .attr("stroke-width", "0")
                 .style("fill", "#eeeeee")
@@ -142,7 +196,7 @@ class TimeChart {
                 .attr("x1", this.xdates(this.data.dates[this.data.dates.length-1]))
                 .attr("x2", this.xdates(this.data.dates[this.data.dates.length-1]))
                 .attr("y1", this.y(0))
-                .attr("y2", this.y(3*this.data.max_count))
+                .attr("y2", this.y(this.y.domain()[1]))
                 .attr("stroke-width", "1")
                 .style("fill", "none")
                 .style("stroke", "#bbbbbb");
@@ -151,7 +205,7 @@ class TimeChart {
             this.svg.append("text")
                 .attr("id", "data_label")
                 .attr("x", this.xdates(this.data.dates[this.data.dates.length-1]) - 5)
-                .attr("y", this.y(3*this.data.max_count) + 5)
+                .attr("y", this.y(this.y.domain()[1]) + 5)
                 .style("text-anchor", "end")
                 .attr("dominant-baseline", "hanging")
                 .style("fill", "#444444")
@@ -161,23 +215,13 @@ class TimeChart {
             this.svg.append("text")
                 .attr("id", "forecast_label")
                 .attr("x", this.xdates(this.data.dates[this.data.dates.length-1]) + 5)
-                .attr("y", this.y(3*this.data.max_count) + 5)
+                .attr("y", this.y(this.y.domain()[1]) + 5)
                 .style("text-anchor", "start")
                 .attr("dominant-baseline", "hanging")
                 .style("fill", "#444444")
                 .style("font-size", "10")
                 .text("Forecast*");
 
-/*            this.svg.append("text")
-                .attr("id", "forecast_label_2")
-                .attr("x", this.xdates(this.data.dates[this.data.dates.length-1]) + 5)
-                .attr("y", this.y(3*this.data.max_count) + 18)
-                .style("text-anchor", "start")
-                .attr("dominant-baseline", "hanging")
-                .style("fill", "#444444")
-                .style("font-size", "7")
-                .text("(Naive Exponential Model)");
-*/
             // Add axes.  First the X axis and label.
             this.xaxis = d3.axisBottom(this.xdates);
             this.svg.append("g")
@@ -256,11 +300,6 @@ class TimeChart {
                 .transition().duration(500)
                 .attr("x", this.xdates(this.data.dates[this.data.dates.length-1-(this.useoldmodel ? this.forecast_period : 0)]) + 5);
 
-/*
-            this.svg.selectAll("#forecast_label_2")
-                .transition().duration(500)
-                .attr("x", this.xdates(this.data.dates[this.data.dates.length-1-(this.useoldmodel ? this.forecast_period : 0)]) + 5);
-*/
             // Now update the x axis label.
             let xlabel = this.svg.select("#xaxislabel");
             let newwidth = 3*this.margin + ((this.width-4*this.margin) / 2);
@@ -296,14 +335,7 @@ class TimeChart {
             .curve(d3.curveBasis)
             //.curve(d3.curveCatmullRom.alpha(0.9));
 
-        // Calculate exponential regression
-        let pairs = d3.zip(d3.range(this.data.totals.length-(this.useoldmodel ? this.old_model_offset : 0)), this.data.totals);
-        // Avoid log(0) errors by alterning all zero values to "just over zero"
-        pairs = pairs.map(d => (d[1] == 0 ? [d[0], 0.000001] : d));
-        let exponential_model = exponential(pairs, {precision: 5});
-
-        // Generate samples from the exponential model.
-        let model_totals = d3.range(this.data.totals.length+this.forecast_period).map(d => exponential_model.predict(d)[1]);
+        // Draw the total model.
         if (this.svg.select(".total_model_line").empty()) {
             this.svg.append("path")
                 .datum(model_totals)
@@ -318,6 +350,7 @@ class TimeChart {
         else {
             d3.select(".total_model_line")
                 .transition().duration(500)
+                .style("opacity", (this.show_totals ? 1 : 0))
                 .attr("d", curve_generator(model_totals));
         }
 
@@ -333,6 +366,7 @@ class TimeChart {
         else {
             d3.select(".total_line")
                 .transition().duration(500)
+                .style("opacity", (this.show_totals ? 1 : 0))
                 .attr("d", line_generator);
         }
 
@@ -348,27 +382,10 @@ class TimeChart {
             .style("fill", "#777777");
         total_dots
             .transition().duration(500)
+                .style("opacity", (this.show_totals ? 1 : 0))
                 .attr("cx", function(d,i) {return x(itodate[i]);})
                 .attr("cy", function(d,i) {return y(d);});
 
-        // For each region, create an object that includes the corresponding data and model.
-        let selected_region_data = this.selected_region_list.map(region => {
-            let region_data = this.data.regions[region];
-            // First, the region model.
-            // Calculate exponential regression
-            pairs = d3.zip(d3.range(region_data.length-(this.useoldmodel ? this.old_model_offset : 0)), region_data);
-            // Avoid log(0) errors by alterning all zero values to "just over zero"
-            pairs = pairs.map(d => (d[1] == 0 ? [d[0], 0.000001] : d));
-            let exponential_model = exponential(pairs, {precision: 5});
-            // Generate samples from the exponential model.
-            let model_totals = d3.range(region_data.length+this.forecast_period).map(d => exponential_model.predict(d)[1]);
-
-            return {
-                region: region,
-                real_data: region_data,
-                model_data: model_totals
-            }
-        })
 
         // Now render the region model lines.
         let region_model_lines = this.svg.selectAll(".region_model_line").data(selected_region_data, function(d,i) { return d.region; });
@@ -461,19 +478,20 @@ class TimeChart {
             .remove();
 
         // Render the legend.
-        let legend_labels = this.svg.selectAll(".legend_text").data(["Nationwide"].concat(this.selected_region_list), function(d,i) {return d;});
+        let legend_labels = this.svg.selectAll(".legend_text").data([this.grand_total_label].concat(this.selected_region_list), function(d,i) {return d;});
         let margin = this.margin;
 
         legend_labels
             .transition().duration(500)
             .attr('y', function(d,i) {return margin + 10 + i*18})
 
+        let grand_total_label = this.grand_total_label;
         legend_labels.enter().append("text")
             .attr("class", "legend_text")
             .attr('x', 3*this.margin + 10)
             .attr('y', function(d,i) {return margin + 10 + i*18})
             .style("font-size", "12")
-            .style("fill", function(d) { return (d==='Nationwide'? '#888888' : colorscale(get_data_index(d))) })
+            .style("fill", function(d) { return (d===grand_total_label? '#888888' : colorscale(get_data_index(d))) })
             .text(function(d) { return d;});
 
         legend_labels.exit()

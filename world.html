@@ -144,8 +144,19 @@
                 active.classed('off', false);
             }
         }
+        else {
+            // This means they clicked the total label.
+            let active = d3.select("#legend-total");
+            if (active.classed('on')) {
+                active.classed('off', true);
+                active.classed('on', false);
+            }
+            else {
+                active.classed('on', true);
+                active.classed('off', false);
+            }
+        }
     }
-
     d3.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv").then(function(data) {
         country_data = data.filter(record => (record['Province/State'].indexOf(',') == -1));
         let country_groups = d3.nest()
@@ -176,7 +187,7 @@
             .entries(country_data);
 
         let covid_data = new CovidDataCountry(country_groups.map(record => record.value));
-        covid_time_chart = new TimeChart(covid_data);
+        covid_time_chart = new TimeChart(covid_data, "Global");
 
         // Populate last date
         let last_date_span = d3.select("#last_date");
@@ -185,7 +196,7 @@
         // Populate country data table.
         let country_data_div = d3.select("#country_container");
         let _html = "<table>";
-        _html += "<tr onclick=\'legend_select(); covid_time_chart.select();\'><th style='padding-right: 15px;'>Global</th><th>"+covid_data.totals[covid_data.totals.length-1]+"</th><th><svg style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='5'></circle></svg></th></tr>";
+        _html += "<tr onclick=\'legend_select(); covid_time_chart.toggle_total();\'><th style='padding-right: 15px;'>Global</th><th>"+covid_data.totals[covid_data.totals.length-1]+"</th><th><svg class='legend on' id='legend-total' style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='5'></circle></svg></th></tr>";
 
         let country_names = Object.keys(covid_data.regions).sort();
         for (i=0; i<country_names.length; i++) {
