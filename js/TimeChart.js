@@ -47,11 +47,12 @@ class TimeChart {
 
         // Setup the tool tip.  Note that this is just one example, and that many styling options are available.
         // See original documentation for more details on styling: http://labratrevenge.com/d3-tip/
+        let numformat = d3.format(",");
         let dates = this.data.date_strings;
         this.tool_tip = d3.tip()
             .attr("class", "d3-tip")
             .offset([-8, 0])
-            .html(function(d,i) { return ""+d+" confirmed cases on " + dates[i]; });
+            .html(function(d,i) { return ""+numformat(d)+" confirmed cases on " + dates[i]; });
         this.svg.call(this.tool_tip);
 
         // Define a clipping region.  x/y/h/w will be updated in render based on current scales.
