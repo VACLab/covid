@@ -70,11 +70,11 @@
         </div>
         <div id="footerResponsive" class="navbar-collapse">
             <ul class="navbar-nav">
-                <li class="nav-item active">
-                    <a class="nav-link" href="#">Confirmed Cases <span class="sr-only">(current)</span></a>
-                </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="us-deaths.html">Deaths</a>
+                    <a class="nav-link" href="us.html">Confirmed Cases <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Deaths</a>
                 </li>
             </ul>
         </div>
@@ -86,13 +86,13 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-3" style="background: #fff;">
-            <b>Confirmed Cases By State</b><br/><span style="font-size:small;">Data <a href="https://static.usafacts.org/public/data/covid-19/covid_confirmed_usafacts.csv">pulled live</a> as of <span id="last_date"></span>.<br/>Click on a state name below to see state-level data.</span><p></p>
+            <b>Deaths By State</b><br/><span style="font-size:small;">Data <a href="https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv">pulled live</a> as of <span id="last_date"></span>.<br/>Click on a state name below to see state-level data.</span><p></p>
             <div class="container-fluid" id="state_container">
                 <i>Loading...</i>
             </div>
         </div>
         <div class="col-md-9 flex-grow-1;" style="background: #fff;">
-            <b>Confirmed Cases Over Time</b>
+            <b>Deaths Over Time</b>
             <br/>
             <button type="button" id='linearbtn' class="btn btn-primary btn-sm" onclick="{
                 $('#linearbtn').addClass('btn-primary');
@@ -169,96 +169,12 @@
         }
     }
 
-
-    let long_names = {
-        'AK': 'Alaska',
-        'AL': 'Alabama',
-        'AR': 'Arkansas',
-        'AS': 'American Samoa',
-        'AZ': 'Arizona',
-        'CA': 'California',
-        'CO': 'Colorado',
-        'CT': 'Connecticut',
-        'DC': 'Washington, DC',
-        'DE': 'Delaware',
-        'FL': 'Florida',
-        'GA': 'Georgia',
-        'GU': 'Guam',
-        'HI': 'Hawaii',
-        'IA': 'Iowa',
-        'ID': 'Idaho',
-        'IL': 'Illinois',
-        'IN': 'Indiana',
-        'KS': 'Kansas',
-        'KY': 'Kentucky',
-        'LA': 'Louisiana',
-        'MA': 'Massachusetts',
-        'MD': 'Maryland',
-        'ME': 'Maine',
-        'MI': 'Michigan',
-        'MN': 'Minnesota',
-        'MO': 'Missouri',
-        'MP': 'Northern Marianas',
-        'MS': 'Mississippi',
-        'MT': 'Montana',
-        'NC': 'North Carolina',
-        'ND': 'North Dakota',
-        'NE': 'Nebraska',
-        'NH': 'New Hampshire',
-        'NJ': 'New Jersey',
-        'NM': 'New Mexico',
-        'NV': 'Nevada',
-        'NY': 'New York',
-        'OH': 'Ohio',
-        'OK': 'Oklahoma',
-        'OR': 'Oregon',
-        'PA': 'Pennsylvania',
-        'PR': 'Puerto Rico',
-        'RI': 'Rhode Island',
-        'SC': 'South Carolina',
-        'SD': 'South Dakota',
-        'TN': 'Tennessee',
-        'TX': 'Texas',
-        'UT': 'Utah',
-        'VA': 'Virginia',
-        'VI': 'Virgin Islands',
-        'VT': 'Vermont',
-        'WA': 'Washington',
-        'WI': 'Wisconsin',
-        'WV': 'West Virginia',
-        'WY': 'Wyoming'
-    }
-
-    d3.csv("https://static.usafacts.org/public/data/covid-19/covid_confirmed_usafacts.csv").then(function(data) {
+    d3.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv").then(function(data) {
         let numformat = d3.format(",");
 
-        let state_groups = d3.nest()
-            .key(d => d['State'])
-            .rollup(subregions => {
-                agg_data_for_state = {};
-                // Empty out the province/state data, as well as lat/long data.
-                agg_data_for_state['Province/State'] = long_names[subregions[0]['State']];
-
-                // Get all dates.  We assume that this means all object properties that start with a number.
-                let dates = Object.keys(subregions[0]).filter(prop => ((prop.charAt(0) >= '0') && (prop.charAt(0) <= '9')) );
-                // First, convert current agg_data object to numbers.
-                for (let i=0; i<dates.length; i++) {
-                    agg_data_for_state[dates[i]] = +subregions[0][dates[i]]
-                }
-
-                // Now aggregate any remaining subregions.
-                for (let r=1; r<subregions.length; r++) {
-                    for (let i=0; i<dates.length; i++) {
-                        agg_data_for_state[dates[i]] += (+subregions[r][dates[i]])
-                    }
-                }
-
-                return agg_data_for_state;
-            })
-            .entries(data);
-
-        let covid_data = new CovidData(state_groups.map(d => d.value), "", true);
-        covid_time_chart = new TimeChart(covid_data, "Nationwide", "confirmed cases");
+        us_state_data = data.filter(record => (record['Country/Region'] === 'US') && (!record['Province/State'].includes(', ')));
+        let covid_data = new CovidData(us_state_data, "");
+        covid_time_chart = new TimeChart(covid_data, "Nationwide");
 
         // Populate last date
         let last_date_span = d3.select("#last_date");

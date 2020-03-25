@@ -1,6 +1,6 @@
 
 class TimeChart {
-    constructor(covid_data, grand_total_label) {
+    constructor(covid_data, grand_total_label, tool_tip_desc) {
         this.old_model_offset = 3;
         this.forecast_period = 3;
         this.margin = 30;
@@ -49,10 +49,13 @@ class TimeChart {
         // See original documentation for more details on styling: http://labratrevenge.com/d3-tip/
         let numformat = d3.format(",");
         let dates = this.data.date_strings;
+        if (tool_tip_desc === undefined) {
+            tool_tip_desc = "recorded"
+        }
         this.tool_tip = d3.tip()
             .attr("class", "d3-tip")
             .offset([-8, 0])
-            .html(function(d,i) { return ""+numformat(d)+" confirmed cases on " + dates[i]; });
+            .html(function(d,i) { return ""+numformat(d)+" " + tool_tip_desc + " on " + dates[i]; });
         this.svg.call(this.tool_tip);
 
         // Define a clipping region.  x/y/h/w will be updated in render based on current scales.
@@ -152,7 +155,7 @@ class TimeChart {
             max_observed_value = Math.max(max_observed_value, d3.max(selected_region_data[i].real_data));
         }
         if (this.show_totals) {
-            max_observed_value = Math.max(max_observed_value, model_totals[model_totals.length-1])
+            max_observed_value = Math.max(max_observed_value, model_totals[model_totals.length-2])
             max_observed_value = Math.max(max_observed_value, this.data.totals[this.data.totals.length-1])
         }
 
@@ -164,6 +167,7 @@ class TimeChart {
         this.ylog.range([this.height-2*this.margin, this.margin]);
         this.ylinear.range([this.height-2*this.margin, this.margin]);
         // Apply the max observed value.
+        console.log(max_observed_value);
         this.ylinear.domain([0,1.05*max_observed_value]);
         this.ylog.domain([0,1.05*max_observed_value]);
 

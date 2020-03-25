@@ -202,7 +202,7 @@
             .entries(country_data);
 
         let covid_data = new CovidDataCountry(country_groups.map(record => record.value));
-        covid_time_chart = new TimeChart(covid_data, "Global");
+        covid_time_chart = new TimeChart(covid_data, "Global", "deaths");
 
         // Populate last date
         let last_date_span = d3.select("#last_date");

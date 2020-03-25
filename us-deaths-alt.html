@@ -45,7 +45,7 @@
     <script src="js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script src="js/d3.min.js" crossorigin="anonymous"></script>
     <script src="js/d3-tip.js" crossorigin="anonymous"></script>
-    <script src="js/CovidData.js" crossorigin="anonymous"></script>
+    <script src="js/AltCovidData.js" crossorigin="anonymous"></script>
     <script src="js/TimeChart.js" crossorigin="anonymous"></script>
     <script src="js/ResizeObserver.js" crossorigin="anonymous"></script>
     <script src="js/regression.js" crossorigin="anonymous"></script>
@@ -70,11 +70,11 @@
         </div>
         <div id="footerResponsive" class="navbar-collapse">
             <ul class="navbar-nav">
-                <li class="nav-item active">
-                    <a class="nav-link" href="#">Confirmed Cases <span class="sr-only">(current)</span></a>
-                </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="us-deaths.html">Deaths</a>
+                    <a class="nav-link" href="us.html">Confirmed Cases <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Deaths</a>
                 </li>
             </ul>
         </div>
@@ -86,13 +86,13 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-3" style="background: #fff;">
-            <b>Confirmed Cases By State</b><br/><span style="font-size:small;">Data <a href="https://static.usafacts.org/public/data/covid-19/covid_confirmed_usafacts.csv">pulled live</a> as of <span id="last_date"></span>.<br/>Click on a state name below to see state-level data.</span><p></p>
+            <b>Deaths By State</b><br/><span style="font-size:small;">Data <a href="https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv">pulled live</a> as of <span id="last_date"></span>.<br/>Click on a state name below to see state-level data.</span><p></p>
             <div class="container-fluid" id="state_container">
                 <i>Loading...</i>
             </div>
         </div>
         <div class="col-md-9 flex-grow-1;" style="background: #fff;">
-            <b>Confirmed Cases Over Time</b>
+            <b>Deaths Over Time</b>
             <br/>
             <button type="button" id='linearbtn' class="btn btn-primary btn-sm" onclick="{
                 $('#linearbtn').addClass('btn-primary');
@@ -169,7 +169,6 @@
         }
     }
 
-
     let long_names = {
         'AK': 'Alaska',
         'AL': 'Alabama',
@@ -229,36 +228,47 @@
         'WY': 'Wyoming'
     }
 
-    d3.csv("https://static.usafacts.org/public/data/covid-19/covid_confirmed_usafacts.csv").then(function(data) {
-        let numformat = d3.format(",");
+    d3.csv("https://coronadatascraper.com/timeseries.csv").then(function(data) {
 
-        let state_groups = d3.nest()
-            .key(d => d['State'])
-            .rollup(subregions => {
-                agg_data_for_state = {};
-                // Empty out the province/state data, as well as lat/long data.
-                agg_data_for_state['Province/State'] = long_names[subregions[0]['State']];
+        let expanded_state_data = data.filter(record => (record.country == 'USA') && (record.state.length > 0) && (record.county.length == 0) && (record.city.length == 0))
+        expanded_state_data = expanded_state_data.map(record => {
+            let result = {
+                date: record.date,
+                state: long_names[record.state],
+                deaths: ((record.deaths === undefined) ? 0 : record.deaths)
+            }
+            result['Province/State'] = result['state'];
+            return result;
+        });
 
-                // Get all dates.  We assume that this means all object properties that start with a number.
-                let dates = Object.keys(subregions[0]).filter(prop => ((prop.charAt(0) >= '0') && (prop.charAt(0) <= '9')) );
-                // First, convert current agg_data object to numbers.
-                for (let i=0; i<dates.length; i++) {
-                    agg_data_for_state[dates[i]] = +subregions[0][dates[i]]
-                }
+        // Now nest and rollup to produce the right data structure.
+        let state_data = d3.nest()
+            .key(d => d['Province/State'])
+            .rollup(state_date_vals => {
+                let result = {}
+                result['state'] = state_date_vals[0]['state'];
+                result['Province/State'] = state_date_vals[0]['Province/State'];
 
-                // Now aggregate any remaining subregions.
-                for (let r=1; r<subregions.length; r++) {
-                    for (let i=0; i<dates.length; i++) {
-                        agg_data_for_state[dates[i]] += (+subregions[r][dates[i]])
+                let prior_value = 0;
+                for (let i=0; i<state_date_vals.length; i++) {
+                    let val = +state_date_vals[i]['deaths'];
+                    if (val == 0) {
+                        result[state_date_vals[i]['date']] = prior_value;
+                    }
+                    else {
+                        prior_value = +state_date_vals[i]['deaths'];
+                        result[state_date_vals[i]['date']] = +state_date_vals[i]['deaths'];
                     }
                 }
-
-                return agg_data_for_state;
+                return result;
             })
-            .entries(data);
+            .entries(expanded_state_data);
 
-        let covid_data = new CovidData(state_groups.map(d => d.value), "", true);
-        covid_time_chart = new TimeChart(covid_data, "Nationwide", "confirmed cases");
+
+        let numformat = d3.format(",");
+
+        let covid_data = new CovidData(state_data.map(record => record.value), "", true);
+        covid_time_chart = new TimeChart(covid_data, "Nationwide");
 
         // Populate last date
         let last_date_span = d3.select("#last_date");
@@ -277,6 +287,7 @@
         state_data_div.html(_html);
 
     });
+
 </script>
 </body>
 </html>

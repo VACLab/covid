@@ -1,5 +1,5 @@
 class CovidData {
-    constructor(raw_data, strip_substring, four_digit_year) {
+    constructor(raw_data, strip_substring, zero_padded_dates) {
         // Initialize an object to store the various data series.
         this.max_count = 0;
         this.dates = []
@@ -13,7 +13,18 @@ class CovidData {
         current_date.setDate(current_date.getDate())
         while (next_date < current_date) {
             // Is the date in the data file?
-            let string_form = "" + (next_date.getMonth()+1) + "/" + next_date.getDate() + "/" + ((four_digit_year == true) ? next_date.getFullYear() : (next_date.getFullYear()-2000));
+            let string_form = (next_date.getFullYear()) + "-";
+            let month = next_date.getMonth()+1;
+            if ((zero_padded_dates == true) && (month < 10)) {
+                string_form += "0";
+            }
+            string_form += month + "-";
+            let day = next_date.getDate();
+            if ((zero_padded_dates == true) && (day < 10)) {
+                string_form += "0";
+            }
+            string_form += next_date.getDate();
+
             if (undefined != raw_data[0][string_form]) {
                 this.dates.push(new Date(next_date));
                 this.date_strings.push(string_form);
@@ -25,7 +36,7 @@ class CovidData {
 
         this.regions = {};
         for (let i=0; i < raw_data.length; i++) {
-            let region_name = raw_data[i]['Province/State'];
+            let region_name = raw_data[i]['state'];
             region_name = region_name.substring(0, region_name.length - strip_substring.length);
 
             // Now iterate over dates.
@@ -33,7 +44,7 @@ class CovidData {
             for (let j=0; j<this.date_strings.length; j++) {
                 let val_as_string = raw_data[i][this.date_strings[j]];
                 let val = 0;
-                if (val_as_string.length == 0) {
+                if ((val_as_string === undefined) || (val_as_string.length == 0)) {
                     // If there is an empty cell (no data) use the previous day's number.
                     val = region_data[region_data.length-1]
                 }
@@ -41,8 +52,14 @@ class CovidData {
                     val = +val_as_string;
                 }	
                 if (isNaN(val)) {
-                    // If we have a NaN, use the pervious day's data...
-                    val = region_data[region_data.length-1]
+                    // If we have a NaN, use the previous day's data...
+                    if (j>0) {
+                        val = region_data[region_data.length-1]
+                    }
+                    else {
+                        // Unless this is the first day.  Then make it zero.
+                        val = 0;
+                    }
                 }
                 region_data.push(val);
             }
