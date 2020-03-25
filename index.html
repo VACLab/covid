@@ -64,21 +64,59 @@
     <div class="container-fluid" style="padding:0;">
         <div class="navbar-header">
             <a class="navbar-brand" href="#">
-                COVID-19 Visualizations
+                COVID-19 Growth Charts
             </a>
         </div>
+        <div id="footerResponsive" class="navbar-collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html">About</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Worldwide
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="nav-link" href="world.html">Confirmed Cases <span class="sr-only">(current)</span></a>
+                        <a class="nav-link" href="world-deaths.html">Deaths</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        United States
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="nav-link" href="us.html">Confirmed Cases <span class="sr-only">(current)</span></a>
+                        <a class="nav-link" href="us-deaths.html">Deaths</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://vaclab.unc.edu/"><img style="width: 192px;" src="vaclab_logo.svg"></a></li>
+        </ul>
     </div>
-    <ul class="nav navbar-nav navbar-right">
-        <li><a href="http://vaclab.unc.edu/"><img style="width: 192px;" src="vaclab_logo.svg"></a></li>
-    </ul>
 </nav>
 <div class="row">
     <div style="background: #ffffff; padding-top: 10px; padding-left: 40px; padding-right: 40px; border-bottom: 1px solid lightgray; width: 100%;" class="col-md-12 flex-grow-1">
-        There are two versions of this visualization:
-        <ul>
-            <li><b>COVID-19 around the world by country: Confirmed Cases and Deaths.</b> <a href="world.html">Click here to view the latest data.</a></li>
-            <li><b>COVID-19 in the US by state: Confirmed Cases and Deaths.</b> <a href="us.html">Click here to view the latest data.</a></li>
-        </ul>
+        <p>
+            This website provides interactive growth chart visualizations showing statistics for the spread of COVID-19 over
+            time. Charts are provided for both confirmed cases and deaths, counted by country (for global data) or by state
+            (within the United States).
+        </p>
+        <p>
+            Data for these charts is sourced from projects on the web which are aggregating statistics in various ways.
+            The data sometimes come from scraping official sites, manual data entry, or other unreliable methods. Please
+            consider the uncertain nature of the data you are viewing when looking at this website's charts.  In addition,
+            even "accurate" data has significant limitations that depend on local reporting practices, political
+            influence around the world, widely variable availability of COVID-19 tests as well as testing criteria.  In summary,
+            readers should be skeptical consumers of data. Links are provided with each chart to the source data that is
+            used to produce the graphics.
+        </p>
+        <p>
+            Ready to begin? Please use the menu bar at the top of this page to select a growth chart that you would like
+            to see.
+        </p>
     </div>
 </div>
 <div class="row">
