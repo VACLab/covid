@@ -247,6 +247,8 @@
     d3.csv("https://static.usafacts.org/public/data/covid-19/covid_deaths_usafacts.csv").then(function(data) {
         let numformat = d3.format(",");
 
+        // Remove empty lines.
+        data = data.filter(record => (record['State'].length > 0));
         let state_groups = d3.nest()
             .key(d => d['State'])
             .rollup(subregions => {
