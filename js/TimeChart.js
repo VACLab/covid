@@ -122,7 +122,7 @@ class TimeChart {
         // so we can get a max count value, which we can in turn use to scale the visualization.
         let selected_region_data = this.selected_region_list.map(region => {
             let region_data = this.data.regions[region];
-            // First, the region model.
+            // First, the region model based on the selected mode.
             // Calculate exponential regression
             let pairs = d3.zip(d3.range(region_data.length-(this.useoldmodel ? this.old_model_offset : 0)), region_data);
             // Avoid log(0) errors by alterning all zero values to "just over zero"
@@ -131,10 +131,19 @@ class TimeChart {
             // Generate samples from the exponential model.
             let model_totals = d3.range(region_data.length+this.forecast_period).map(d => exponential_model.predict(d)[1]);
 
+            // Now the region model based on all data, used to scale the Y axis.
+            // Calculate exponential regression
+            let latest_pairs = d3.zip(d3.range(region_data.length), region_data);
+            // Avoid log(0) errors by alterning all zero values to "just over zero"
+            latest_pairs = latest_pairs.map(d => (d[1] == 0 ? [d[0], 0.000001] : d));
+            let latest_exponential_model = exponential(latest_pairs, {precision: 5});
+            // Generate samples from the exponential model.
+            let latest_model_totals = d3.range(region_data.length+this.forecast_period).map(d => latest_exponential_model.predict(d)[1]);
             return {
                 region: region,
                 real_data: region_data,
-                model_data: model_totals
+                model_data: model_totals,
+                latest_model_data: latest_model_totals,
             }
         });
 
@@ -158,7 +167,7 @@ class TimeChart {
         //////////////////////////////////////////////////////////////////////
         let max_observed_value = 0;
         for (let i=0; i<selected_region_data.length; i++) {
-            max_observed_value = Math.max(max_observed_value, d3.max(selected_region_data[i].model_data));
+            max_observed_value = Math.max(max_observed_value, d3.max(selected_region_data[i].latest_model_data));
             max_observed_value = Math.max(max_observed_value, d3.max(selected_region_data[i].real_data));
         }
         if (this.show_totals) {
