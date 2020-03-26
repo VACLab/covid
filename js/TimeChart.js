@@ -140,6 +140,13 @@ class TimeChart {
 
         // Calculate exponential regression for the totals, and sample it to use for drawing the total chart.  Similarly, we
         // do this first so we can get a good max value for scaling the visualizations.
+        let latest_pairs = d3.zip(d3.range(this.data.totals.length), this.data.totals);
+        latest_pairs = latest_pairs.map(d => (d[1] == 0 ? [d[0], 0.000001] : d));
+        let latest_exponential_model = exponential(latest_pairs, {precision: 5});
+        let latest_model_totals = d3.range(this.data.totals.length+this.forecast_period).map(d => latest_exponential_model.predict(d)[1]);
+
+        // Calculate exponential regression for the totals, and sample it to use for drawing the total chart.  Similarly, we
+        // do this first so we can get a good max value for scaling the visualizations.
         let pairs = d3.zip(d3.range(this.data.totals.length-(this.useoldmodel ? this.old_model_offset : 0)), this.data.totals);
         // Avoid log(0) errors by alterning all zero values to "just over zero"
         pairs = pairs.map(d => (d[1] == 0 ? [d[0], 0.000001] : d));
@@ -155,7 +162,7 @@ class TimeChart {
             max_observed_value = Math.max(max_observed_value, d3.max(selected_region_data[i].real_data));
         }
         if (this.show_totals) {
-            max_observed_value = Math.max(max_observed_value, model_totals[model_totals.length-2])
+            max_observed_value = Math.max(max_observed_value, latest_model_totals[latest_model_totals.length-1])
             max_observed_value = Math.max(max_observed_value, this.data.totals[this.data.totals.length-1])
         }
 
@@ -167,7 +174,6 @@ class TimeChart {
         this.ylog.range([this.height-2*this.margin, this.margin]);
         this.ylinear.range([this.height-2*this.margin, this.margin]);
         // Apply the max observed value.
-        console.log(max_observed_value);
         this.ylinear.domain([0,1.05*max_observed_value]);
         this.ylog.domain([0,1.05*max_observed_value]);
 
@@ -201,7 +207,7 @@ class TimeChart {
                 .attr("x1", this.xdates(this.data.dates[this.data.dates.length-1]))
                 .attr("x2", this.xdates(this.data.dates[this.data.dates.length-1]))
                 .attr("y1", this.y(0))
-                .attr("y2", this.y(this.y.domain()[1]))
+                .attr("y2", this.y(this.y.domain()[1])-10)
                 .attr("stroke-width", "1")
                 .style("fill", "none")
                 .style("stroke", "#bbbbbb");
@@ -210,9 +216,9 @@ class TimeChart {
             this.svg.append("text")
                 .attr("id", "data_label")
                 .attr("x", this.xdates(this.data.dates[this.data.dates.length-1]) - 5)
-                .attr("y", this.y(this.y.domain()[1]) + 5)
+                .attr("y", this.y(this.y.domain()[1]) - 2)
                 .style("text-anchor", "end")
-                .attr("dominant-baseline", "hanging")
+                .attr("dominant-baseline", "baseline")
                 .style("fill", "#444444")
                 .style("font-size", "10")
                 .text("Historical Data");
@@ -220,9 +226,9 @@ class TimeChart {
             this.svg.append("text")
                 .attr("id", "forecast_label")
                 .attr("x", this.xdates(this.data.dates[this.data.dates.length-1]) + 5)
-                .attr("y", this.y(this.y.domain()[1]) + 5)
+                .attr("y", this.y(this.y.domain()[1]) - 2)
                 .style("text-anchor", "start")
-                .attr("dominant-baseline", "hanging")
+                .attr("dominant-baseline", "baseline")
                 .style("fill", "#444444")
                 .style("font-size", "10")
                 .text("Forecast*");
