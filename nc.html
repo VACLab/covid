@@ -48,6 +48,7 @@
     <script src="js/CovidData.js" crossorigin="anonymous"></script>
     <script src="js/TimeChart.js" crossorigin="anonymous"></script>
     <script src="js/ResizeObserver.js" crossorigin="anonymous"></script>
+    <script src="js/regression.js" crossorigin="anonymous"></script>
     <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-32250702-3"></script>
 <script>
@@ -59,33 +60,62 @@
 </script>
 
 </head>
-<body>
+<body style="">
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid" style="padding:0;">
         <div class="navbar-header">
             <a class="navbar-brand" href="#">
-                COVID-19 in NC
+                COVID-19 Growth Charts
             </a>
         </div>
+        <div id="footerResponsive" class="navbar-collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html">About</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Worldwide
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="nav-link" href="world.html">Confirmed Cases <span class="sr-only">(current)</span></a>
+                        <a class="nav-link" href="world-deaths.html">Deaths</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        United States
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="nav-link" href="us.html">Confirmed Cases <span class="sr-only">(current)</span></a>
+                        <a class="nav-link" href="us-deaths.html">Deaths</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        North Carolina
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="nav-link" href="nc.html">Confirmed Cases <span class="sr-only">(current)</span></a>
+                        <a class="nav-link" href="nc-deaths.html">Deaths</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://vaclab.unc.edu/"><img style="width: 192px;" src="vaclab_logo.svg"></a></li>
+        </ul>
     </div>
-    <ul class="nav navbar-nav navbar-right">
-        <li><a href="http://vaclab.unc.edu/"><img style="width: 192px;" src="vaclab_logo.svg"></a></li>
-    </ul>
 </nav>
-<div class="row">
-    <div style="background: #ffaaaa;padding-top: 10px; padding-left: 40px; padding-right: 40px; border-bottom: 1px solid lightgray; text-align: center; font-size: small; width: 100%;" class="col-md-12 flex-grow-1">
-        Sadly, the data source used for this page has dropped county-by-county reporting as of March 11, 2020 (within hours of the launch of this website). While we look for a new source of data the functionality on this page may be degraded. MOST CRITICALLY: THIS MEANS THE DATA IS LIKELY TO BE INACCURATE.<br/><P><b>For a state-by-state look at the United States (which still works!), <a href="us.html">click here</a>.</b></P>
-    </div>
-</div>
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-3" style="background: #fff;">
-            <b>Confirmed Cases By County</b><br/><span style="font-size:small;">Data <a href="https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv">pulled live</a> as of <span id="last_date"></span>.<br/>Click on a county name below to see county-level data.</span><p></p>
-            <div class="container-fluid" id="county_container">
+            <b>Confirmed Cases By NC County</b><br/><span style="font-size:small;">Data <a href="https://static.usafacts.org/public/data/covid-19/covid_confirmed_usafacts.csv">pulled live</a> as of <span id="last_date"></span>.<br/>Click on a state name below to see state-level data.</span><p></p>
+            <div class="container-fluid" id="state_container">
                 <i>Loading...</i>
             </div>
         </div>
-        <div class="col-md-9 flex-grow-1" style="background: #fff;">
+        <div class="col-md-9 flex-grow-1;" style="background: #fff;">
             <b>Confirmed Cases Over Time</b>
             <br/>
             <button type="button" id='linearbtn' class="btn btn-primary btn-sm" onclick="{
@@ -102,49 +132,92 @@
                 $('#logbtn').removeClass('btn-secondary');
                 covid_time_chart.use_log_scale(true);
             }">Log Scale</button>
-            <div class="row flex-grow-1" id="time_chart_container">
-        </div>
+            <div style="float: right;">
+                <button type="button" id='todaymodelbtn' class="btn btn-primary btn-sm" onclick="{
+                $('#oldmodelbtn').addClass('btn-secondary');
+                $('#oldmodelbtn').removeClass('btn-primary');
+                $('#todaymodelbtn').addClass('btn-primary');
+                $('#todaymodelbtn').removeClass('btn-secondary');
+                covid_time_chart.use_old_model(false);
+            }">Latest Model</button>
+            <button type="button" id='oldmodelbtn' class="btn btn-secondary btn-sm" onclick="{
+                $('#oldmodelbtn').addClass('btn-primary');
+                $('#oldmodelbtn').removeClass('btn-secondary');
+                $('#todaymodelbtn').addClass('btn-secondary');
+                $('#todaymodelbtn').removeClass('btn-primary');
+                covid_time_chart.use_old_model(true);
+            }">Model from 3 Days Ago</button>
+            </div>
+
+            <div class="row flex-grow-1" id="time_chart_container"> </div>
+            <div>* The 'forecast' shown on this page is just a simple extrapolation from the best-fit exponential
+                model derived from the historical data shown in the visualization. This is obviously a VAST
+                simplification of the underlying process. Any serious analysis would need to adopt much more rigorous
+                epidemiological models.
+            </div>
     </div>
-</div>
+    </div>
 <div class="row">
     <div style="margin-top: 15px; border-top: 1px solid lightgray; text-align: center; font-size: small; width: 100%;" class="col-md-12 flex-grow-1">
-        This project is available as open source via <a href="https://github.com/VACLab/covid/">the VACLab GitHub repository</a>.
         <br/><a href="http://vaclab.unc.edu/"><img style="width: 200px;" src="vaclab_logo.svg"></a>
+        <br/>
+        This project is available as open source via <a href="https://github.com/VACLab/covid/">the VACLab GitHub repository</a>.
+
     </div>
 </div>
 <script>
-    function legend_select(county_name) {
-        let legends = d3.selectAll('.legend');
-        legends.classed('off', true);
-        legends.classed('on', false);
+    function legend_select(state_name) {
+        if (state_name != undefined) {
+            let active = d3.select("#legend-" + state_name.replace(/ /g, '-'));
 
-        if (county_name != undefined) {
-            let active = d3.select("#legend-" + county_name.replace(/ /g, '-'));
-            active.classed('on', true);
-            active.classed('off', false);
+            if (active.classed('on')) {
+                active.classed('off', true);
+                active.classed('on', false);
+            }
+            else {
+                active.classed('on', true);
+                active.classed('off', false);
+            }
+        }
+        else {
+            // This means they clicked the total label.
+            let active = d3.select("#legend-total");
+            if (active.classed('on')) {
+                active.classed('off', true);
+                active.classed('on', false);
+            }
+            else {
+                active.classed('on', true);
+                active.classed('off', false);
+            }
         }
     }
 
-    d3.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv").then(function(data) {
-        nc_data = data.filter(record => (record['Country/Region'] === 'US') && (record['Province/State'].endsWith(' County, NC')));
-        let covid_data = new CovidData(nc_data, " County, NC");
-        covid_time_chart = new TimeChart(covid_data);
+    d3.csv("https://static.usafacts.org/public/data/covid-19/covid_confirmed_usafacts.csv").then(function(data) {
+        let numformat = d3.format(",");
+
+        data = data.filter(record => record['State'].trim() === 'NC').map(record => {
+            record['Province/State'] = record['County Name'];
+            return record
+        });
+        let covid_data = new CovidData(data, "", false);
+        covid_time_chart = new TimeChart(covid_data, "Statewide", "confirmed cases");
 
         // Populate last date
         let last_date_span = d3.select("#last_date");
         last_date_span.html(covid_data.date_strings[covid_data.date_strings.length-1]);
 
-        // Populate county data table.
-        let county_data_div = d3.select("#county_container");
+        // Populate state data table.
+        let state_data_div = d3.select("#state_container");
         let _html = "<table>";
-        _html += "<tr onclick=\'legend_select(); covid_time_chart.select();\'><th style='padding-right: 15px;'>Statewide</th><th>"+covid_data.totals[covid_data.totals.length-1]+"</th><th><svg style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='5'></circle></svg></th></tr>";
+        _html += "<tr onclick=\'legend_select(); covid_time_chart.toggle_total();\'><th style='padding-right: 15px;'>Statewide</th><th>"+numformat(covid_data.totals[covid_data.totals.length-1])+"</th><th><svg class='legend on' id='legend-total' style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='5'></circle></svg></th></tr>";
 
-        let county_names = Object.keys(covid_data.regions).sort();
-        for (i=0; i<county_names.length; i++) {
-            _html += "<tr onclick='legend_select(\""+county_names[i]+"\"); covid_time_chart.select(\""+county_names[i]+"\");'><td style='padding-right: 15px;'>"+county_names[i]+"</td><td>"+covid_data.regions[county_names[i]][covid_data.date_strings.length-1]+"</td><td><svg class='legend off' id='legend-"+county_names[i].replace(/ /g, '-')+"' style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #ff8844' cx='8' cy='6' r='3'></circle></svg></td></tr>";
+        let state_names = Object.keys(covid_data.regions).sort();
+        for (i=0; i<state_names.length; i++) {
+            _html += "<tr onclick='legend_select(\""+state_names[i]+"\"); covid_time_chart.select(\""+state_names[i]+"\");'><td style='font-size: small; padding-right: 15px;'>"+state_names[i]+"</td><td style='font-size: small;'>"+numformat(covid_data.regions[state_names[i]][covid_data.date_strings.length-1])+"</td><td><svg class='legend off' id='legend-"+state_names[i].replace(/ /g, '-')+"' style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='3'></circle></svg></td></tr>";
         }
         _html += "</table>";
-        county_data_div.html(_html);
+        state_data_div.html(_html);
 
     });
 </script>
