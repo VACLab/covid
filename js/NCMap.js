@@ -32,6 +32,9 @@ class NCMap {
         });
         size_observer.observe(container);
 
+        this.svg.append("g")
+            .attr('id','mapgroup');
+
         this.tool_tip = d3.tip()
             .attr("class", "d3-tip")
             .offset([-8, 0])
@@ -56,6 +59,11 @@ class NCMap {
             .style("height", this.height+"px")
             .style("width", this.width+"px");
 
+        // Scale the map.
+        let scale_factor = Math.min(this.width / 300.0, this.height / 100.0);
+        this.svg.select("#mapgroup")
+            .attr("transform", "scale(" + scale_factor + " " + scale_factor + ")");
+
         this.render();
     }
 
@@ -75,7 +83,9 @@ class NCMap {
         let val_range = [0,this.max_value];
         let colormap = d3.scaleLinear().domain(val_range).range(["white", "red"]);
 
-        this.svg.selectAll("path")
+
+        // Add the map.
+        this.svg.select("#mapgroup").selectAll("path")
             .data(topojson.feature(this.map_data, this.map_data.objects.cb_2015_north_carolina_county_20m).features)
             .enter().append("path")
             .attr("d", path)

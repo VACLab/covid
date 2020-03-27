@@ -1,5 +1,5 @@
 class CovidData {
-    constructor(raw_data, strip_substring, four_digit_year) {
+    constructor(raw_data, strip_substring) {
         // Initialize an object to store the various data series.
         this.max_count = 0;
         this.dates = []
@@ -13,10 +13,17 @@ class CovidData {
         current_date.setDate(current_date.getDate())
         while (next_date < current_date) {
             // Is the date in the data file?
-            let string_form = "" + (next_date.getMonth()+1) + "/" + next_date.getDate() + "/" + ((four_digit_year == true) ? next_date.getFullYear() : (next_date.getFullYear()-2000));
-            if (undefined != raw_data[0][string_form]) {
+            let string_form_four_digit = "" + (next_date.getMonth()+1) + "/" + next_date.getDate() + "/" + next_date.getFullYear();
+            if (undefined != raw_data[0][string_form_four_digit]) {
                 this.dates.push(new Date(next_date));
-                this.date_strings.push(string_form);
+                this.date_strings.push(string_form_four_digit);
+            }
+            else {
+                let string_form_two_digit = "" + (next_date.getMonth()+1) + "/" + next_date.getDate() + "/" + (next_date.getFullYear()-2000);
+                if (undefined != raw_data[0][string_form_two_digit]) {
+                    this.dates.push(new Date(next_date));
+                    this.date_strings.push(string_form_two_digit);
+                }
             }
 
             // Prepare for next iteration

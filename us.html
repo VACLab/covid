@@ -281,7 +281,7 @@
             })
             .entries(data);
 
-        let covid_data = new CovidData(state_groups.map(d => d.value), "", true);
+        let covid_data = new CovidData(state_groups.map(d => d.value), "");
         covid_time_chart = new TimeChart(covid_data, "Nationwide", "confirmed cases");
 
         // Populate last date

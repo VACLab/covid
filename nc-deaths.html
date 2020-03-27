@@ -204,7 +204,7 @@
             record['Province/State'] = record['County Name'];
             return record
         });
-        let covid_data = new CovidData(data, "", true);
+        let covid_data = new CovidData(data, "");
         covid_time_chart = new TimeChart(covid_data, "Statewide", "deaths");
 
         d3.json("nc-counties.json").then(function(map_data) {
