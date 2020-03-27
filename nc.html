@@ -200,7 +200,7 @@
             record['Province/State'] = record['County Name'];
             return record
         });
-        let covid_data = new CovidData(data, "", false);
+        let covid_data = new CovidData(data, "", true);
         covid_time_chart = new TimeChart(covid_data, "Statewide", "confirmed cases");
 
         // Populate last date
