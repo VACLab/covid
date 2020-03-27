@@ -48,9 +48,9 @@
     <script src="js/CovidData.js" crossorigin="anonymous"></script>
     <script src="js/TimeChart.js" crossorigin="anonymous"></script>
     <script src="js/NCMap.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
     <script src="js/ResizeObserver.js" crossorigin="anonymous"></script>
     <script src="js/regression.js" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/topojson@3"></script>
     <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-32250702-3"></script>
 <script>
@@ -208,7 +208,7 @@
         covid_time_chart = new TimeChart(covid_data, "Statewide", "confirmed cases");
 
         d3.json("nc-counties.json").then(function(map_data) {
-            covid_map = new NCMap(covid_data, map_data);
+            covid_map = new NCMap(covid_data, map_data, "cases");
         });
 
         // Populate last date

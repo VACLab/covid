@@ -47,6 +47,8 @@
     <script src="js/d3-tip.js" crossorigin="anonymous"></script>
     <script src="js/CovidData.js" crossorigin="anonymous"></script>
     <script src="js/TimeChart.js" crossorigin="anonymous"></script>
+    <script src="js/NCMap.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
     <script src="js/ResizeObserver.js" crossorigin="anonymous"></script>
     <script src="js/regression.js" crossorigin="anonymous"></script>
     <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -111,6 +113,8 @@
     <div class="row">
         <div class="col-md-3" style="background: #fff;">
             <b>Deaths By NC County</b><br/><span style="font-size:small;">Data <a href="https://static.usafacts.org/public/data/covid-19/covid_deaths_usafacts.csv">pulled live</a> as of <span id="last_date"></span>.<br/>Click on a state name below to see state-level data.</span><p></p>
+            <div class="container-fluid" id="map_container">
+            </div>
             <div class="container-fluid" id="state_container">
                 <i>Loading...</i>
             </div>
@@ -202,6 +206,10 @@
         });
         let covid_data = new CovidData(data, "", true);
         covid_time_chart = new TimeChart(covid_data, "Statewide", "deaths");
+
+        d3.json("nc-counties.json").then(function(map_data) {
+            covid_map = new NCMap(covid_data, map_data, "deaths");
+        });
 
         // Populate last date
         let last_date_span = d3.select("#last_date");

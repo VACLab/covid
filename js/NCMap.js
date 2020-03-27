@@ -1,12 +1,12 @@
 class NCMap {
-    constructor(covid_data, map_data) {
+    constructor(covid_data, map_data, units) {
         // Listen to resize events.
         let container = document.getElementById("map_container");
         let this_vis = this;
         this.data = covid_data;
         this.map_data = map_data;
         let map_div = d3.select("#map_container");
-
+        this.units = units;
         this.max_value = 0;
         let region_names = Object.keys(this.data.regions);
         for (let i=0; i<region_names.length; i++) {
@@ -42,7 +42,7 @@ class NCMap {
                 if (county_vals != undefined) {
                     case_count = county_vals[county_vals.length-1];
                 }
-                return "" + case_count + " cases in " + d.properties.NAME + " County";
+                return "" + case_count + " " + units + " in " + d.properties.NAME + " County";
             });
         this.svg.call(this.tool_tip);
     }
