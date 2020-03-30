@@ -171,7 +171,7 @@
 <script>
     function legend_select(country_name) {
         if (country_name != undefined) {
-            let active = d3.select("#legend-" + country_name.replace(/ /g, '-'));
+            let active = d3.select("#legend-" + country_name.replace(/ /g, '-').replace(/,/g, '-'));
 
             if (active.classed('on')) {
                 active.classed('off', true);
@@ -240,7 +240,7 @@
 
         let country_names = Object.keys(covid_data.regions).sort();
         for (i=0; i<country_names.length; i++) {
-            _html += "<tr onclick='legend_select(\""+country_names[i]+"\"); covid_time_chart.select(\""+country_names[i]+"\");'><td style='font-size: small; padding-right: 15px;'>"+country_names[i]+"</td><td style='font-size: small;'>"+numformat(covid_data.regions[country_names[i]][covid_data.date_strings.length-1])+"</td><td><svg class='legend off' id='legend-"+country_names[i].replace(/ /g, '-')+"' style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='3'></circle></svg></td></tr>";
+            _html += "<tr onclick='legend_select(\""+country_names[i]+"\"); covid_time_chart.select(\""+country_names[i]+"\");'><td style='font-size: small; padding-right: 15px;'>"+country_names[i]+"</td><td style='font-size: small;'>"+numformat(covid_data.regions[country_names[i]][covid_data.date_strings.length-1])+"</td><td><svg class='legend off' id='legend-"+country_names[i].replace(/ /g, '-').replace(/,/g, '-')+"' style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='3'></circle></svg></td></tr>";
         }
         _html += "</table>";
         country_data_div.html(_html);
