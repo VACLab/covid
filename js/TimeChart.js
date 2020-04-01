@@ -32,9 +32,8 @@ class TimeChart {
         size_observer.observe(container);
 
         // Scales
-        this.end_date = new Date();
+        this.end_date = new Date(this.data.dates[this.data.dates.length-1]);
         this.end_date.setDate(this.data.dates[this.data.dates.length-1].getDate()+this.forecast_period);
-        this.end_date.setHours(0,0,0,0);
         this.xdates = d3.scaleTime().domain([this.data.dates[0], this.end_date]);
         this.x = d3.scaleLinear().domain([0,this.data.totals.length+this.forecast_period]);
         this.ylinear = d3.scaleLinear().domain([0,3*this.data.max_count]);
@@ -338,7 +337,7 @@ class TimeChart {
         // Now add dates for the forecast period.
         let last_date = this.data.dates[this.data.dates.length-1];
         for (let i=1; i<=this.forecast_period; i++) {
-            let new_date = new Date();
+            let new_date = new Date(last_date);
             new_date.setDate(last_date.getDate()+i)
             itodate.push(new_date)
         }
