@@ -298,7 +298,7 @@
 
         let state_names = Object.keys(covid_data.regions).sort();
         for (i=0; i<state_names.length; i++) {
-            _html += "<tr onclick='legend_select(\""+state_names[i]+"\"); covid_time_chart.select(\""+state_names[i]+"\");'><td style='font-size: small; padding-right: 15px;'>"+state_names[i]+"</td><td style='font-size: small;'>"+numformat(covid_data.regions[state_names[i]][covid_data.date_strings.length-1])+"</td><td><svg class='legend off' id='legend-"+state_names[i].replace(/ /g, '-').replace(/,/g, '-')+"' style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='3'></circle></svg></td></tr>";
+            _html += "<tr onclick='legend_select(\""+state_names[i]+"\"); covid_time_chart.select(\""+state_names[i]+"\");'><td style='font-size: small; padding-right: 15px;'>"+state_names[i]+"</td><td style='font-size: small;'>"+numformat(covid_data.regions[state_names[i]][covid_data.date_strings.length-1])+"</td><td><svg class='legend off' id='legend-"+state_names[i].replace(/ /g, '-').replace(/,/g, '-')+"' style='vertical-align: middle; height:15px; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='3'></circle></svg></td></tr>";
         }
         _html += "</table>";
         state_data_div.html(_html);
