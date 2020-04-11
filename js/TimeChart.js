@@ -18,8 +18,8 @@ class TimeChart {
 
         this.svg = time_chart_div.append("svg")
              .attr("id", "time_chart")
-            .style("height", 600)
-            .style("width", 200);
+            .style("height", "600px")
+            .style("width", "200px");
 
         let size_observer = new ResizeObserver(entries => {
             for (let entry of entries) {

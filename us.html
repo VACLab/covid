@@ -291,7 +291,7 @@
         // Populate state data table.
         let state_data_div = d3.select("#state_container");
         let _html = "<table>";
-        _html += "<tr onclick=\'legend_select(); covid_time_chart.toggle_total();\'><th style='padding-right: 15px;'>Nationwide</th><th>"+numformat(covid_data.totals[covid_data.totals.length-1])+"</th><th><svg class='legend on' id='legend-total' style='vertical-align: middle; height:15; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='5'></circle></svg></th></tr>";
+        _html += "<tr onclick=\'legend_select(); covid_time_chart.toggle_total();\'><th style='padding-right: 15px;'>Nationwide</th><th>"+numformat(covid_data.totals[covid_data.totals.length-1])+"</th><th><svg class='legend on' id='legend-total' style='vertical-align: middle; height:15px; width: 15px;'><circle style='fill: #888888' cx='8' cy='6' r='5'></circle></svg></th></tr>";
 
         let state_names = Object.keys(covid_data.regions).sort();
         for (i=0; i<state_names.length; i++) {

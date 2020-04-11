@@ -19,8 +19,8 @@ class NCMap {
 
         this.svg = map_div.append("svg")
             .attr("id", "map")
-            .style("height", 100)
-            .style("width", 300);
+            .style("height", "100px")
+            .style("width", "300px");
 
         let size_observer = new ResizeObserver(entries => {
             for (let entry of entries) {
